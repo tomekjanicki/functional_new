@@ -1,10 +1,22 @@
+using FunctionalElements;
+using FunctionalElements.JsonConverters;
+using FunctionalElements.Services;
+using FunctionalElements.Types;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new WithValueJsonConvertFactory());
+});
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.MapTypeToString<NonEmpty50CharsString>();
+    options.MapTypeToString<EMail>();
+});
+builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace FunctionalElements.Types;
+namespace FunctionalElements.Types.Collections;
 
 public sealed class ReadOnlyDictionary<TKey, TValue> : IReadOnlyCollection<KeyValuePair<TKey, TValue>>
     where TKey : notnull

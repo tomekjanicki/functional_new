@@ -3,7 +3,7 @@ using OneOf;
 
 namespace FunctionalElements.Types;
 
-public sealed record NonEmpty50CharsString
+public sealed record NonEmpty50CharsString : IWithValue<string>
 {
     private NonEmpty50CharsString(string value)
     {

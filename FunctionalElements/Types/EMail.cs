@@ -4,7 +4,7 @@ using OneOf.Types;
 
 namespace FunctionalElements.Types;
 
-public sealed record EMail
+public sealed record EMail : IWithValue<string>
 {
     private static readonly Regex Regex = new(@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$");
 
@@ -31,23 +31,12 @@ public sealed record EMail
         {
             return new Error<string>("value is null");
         }
+        if (value.Length > 320)
+        {
+            return new Error<string>("value is greater than 320 chars");
+        }
         var match = Regex.Match(value);
 
         return match.Success ? new EMail(value) : new Error<string>("value is not valid email");
-    }
-}
-
-public static class Extensions
-{
-    public static T GetValueWhenSuccessOrThrowInvalidCastException<T>(Func<OneOf<T, Error<string>>> tryCreateFunc)
-    {
-        var result = tryCreateFunc();
-
-        if (result.IsT0)
-        {
-            return result.AsT0;
-        }
-
-        throw new InvalidCastException(result.AsT1.Value);
     }
 }

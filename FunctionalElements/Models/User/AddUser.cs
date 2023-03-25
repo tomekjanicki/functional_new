@@ -1,5 +1,6 @@
 using FunctionalElements.Dtos.User;
 using FunctionalElements.Types;
+using FunctionalElements.Types.Collections;
 using OneOf;
 
 namespace FunctionalElements.Models.User;
