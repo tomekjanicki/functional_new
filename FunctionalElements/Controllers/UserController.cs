@@ -24,9 +24,10 @@ public sealed class UserController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> GetUserByEMail(string email)
     {
-        var emailResult = EMail.TryCreate(email);
-
-        return emailResult.Match(GetUserByEMail, error => Task.FromResult<IActionResult>(BadRequest(error.ToReadOnlyDictionary())));
+        return EMail.TryCreate(email)
+            .Match(
+                GetUserByEMail, 
+                static error => error.ToBadRequestTaskActionResult());
     }
 
     [HttpGet("{id:int}")]
@@ -36,9 +37,8 @@ public sealed class UserController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetUserById(int id)
     {
-        var result = await _userService.GetUserById(id);
-
-        return result.Match<IActionResult>(Ok, _ => NotFound());
+        return (await _userService.GetUserById(id))
+            .Match<IActionResult>(Ok, _ => NotFound());
     }
 
     [HttpPost]
@@ -47,22 +47,22 @@ public sealed class UserController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> AddUser(AddUserDto dto)
     {
-        var addUserResult = Models.User.AddUser.TryCreate(dto);
-
-        return addUserResult.Match(AddUser, pairs => Task.FromResult<IActionResult>(BadRequest(pairs)));
+        return Models.User.AddUser.TryCreate(dto)
+            .Match(
+                AddUser, 
+                static pairs => pairs.ToBadRequestTaskActionResult());
     }
 
     private async Task<IActionResult> AddUser(AddUser addUser)
     {
-        var result = await _userService.AddUser(addUser);
 
-        return result.Match<IActionResult>(id => Created("user/", id), error => BadRequest(error.ToReadOnlyDictionary()));
+        return (await _userService.AddUser(addUser))
+            .Match<IActionResult>(id => Created("user/", id), error => BadRequest(error.ToReadOnlyDictionary()));
     }
 
     private async Task<IActionResult> GetUserByEMail(EMail email)
     {
-        var result = await _userService.GetUserByEmail(email);
-
-        return result.Match<IActionResult>(Ok, _ => NotFound());
+        return (await _userService.GetUserByEmail(email))
+            .Match<IActionResult>(Ok, _ => NotFound());
     }
 }
