@@ -55,7 +55,6 @@ public sealed class UserController : ControllerBase
 
     private async Task<IActionResult> AddUser(AddUser addUser)
     {
-
         return (await _userService.AddUser(addUser))
             .Match<IActionResult>(id => Created("user/", id), error => BadRequest(error.ToReadOnlyDictionary()));
     }
