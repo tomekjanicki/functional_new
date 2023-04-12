@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -17,17 +20,15 @@ namespace ApiClient.Services
 {
     public static class Extensions
     {
+        private const string ApplicationJsonContentType = "application/json";
+
         public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string path, string? pathParam = null,
-            IReadOnlyDictionary<string, object?>? queryParams = null, HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default)
-        {
-            return httpClient.SendAsync(HttpMethod.Post, path, pathParam, queryParams, content, headers, token);
-        }
+            IReadOnlyDictionary<string, object?>? queryParams = null, HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default) =>
+            httpClient.SendAsync(HttpMethod.Post, path, pathParam, queryParams, content, headers, token);
 
         public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string path, string? pathParam = null,
-            IReadOnlyDictionary<string, object?>? queryParams = null, HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default)
-        {
-            return httpClient.SendAsync(HttpMethod.Get, path, pathParam, queryParams, content, headers, token);
-        }
+            IReadOnlyDictionary<string, object?>? queryParams = null, HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default) =>
+            httpClient.SendAsync(HttpMethod.Get, path, pathParam, queryParams, content, headers, token);
 
         public static async Task<HttpResponseMessage> SendAsync(this HttpClient httpClient, HttpMethod method, string path, string? pathParam = null, IReadOnlyDictionary<string, object?>? queryParams = null,
             HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default)
@@ -120,9 +121,42 @@ namespace ApiClient.Services
             return default!;
         }
 
-        private static void ThrowErrorException(Error error)
+        private static void ThrowErrorException(Error error) => throw new InvalidOperationException($"Api method failed with Status Code: {error.StatusCode}, Content: {error.Content}");
+
+        public static StringContent GetStringInputContent<T>(this T input) => new StringContent(JsonSerializer.Serialize(input), Encoding.UTF8, ApplicationJsonContentType);
+
+        public static ByteArrayContent GetByteArrayContentWithApplicationJsonContentType(this byte[] array)
         {
-            throw new InvalidOperationException($"Api method failed with Status Code: {error.StatusCode}, Content: {error.Content}");
+            var content = new ByteArrayContent(array);
+            content.Headers.ContentType = new MediaTypeHeaderValue(ApplicationJsonContentType);
+
+            return content;
+        }
+
+        public static T Deserialize<T>(this string contentAsString) => JsonSerializer.Deserialize<T>(contentAsString)!;
+
+        public static async Task<OneOf<T, Error>> HandleResultOrError<T>(this HttpContent content, HttpStatusCode statusCode,
+            HttpStatusCode successStatusCode)
+        {
+            var contentAsString = await content.ReadAsStringAsync().ConfigureAwait(false);
+            return statusCode == successStatusCode
+                ? (OneOf<T, Error>)contentAsString.Deserialize<T>()
+                : new Error(contentAsString, statusCode);
+        }
+
+        public static async Task<OneOf<T, NotFound, Error>> HandleResultOrNotFoundOrError<T>(this HttpContent content, HttpStatusCode statusCode,
+            HttpStatusCode successStatusCode)
+        {
+            var contentAsString = await content.ReadAsStringAsync().ConfigureAwait(false);
+            if (statusCode == successStatusCode)
+            {
+                return contentAsString.Deserialize<T>();
+            }
+            if (statusCode == HttpStatusCode.NotFound)
+            {
+                return new NotFound();
+            }
+            return new Error(contentAsString, statusCode);
         }
     }
 }
