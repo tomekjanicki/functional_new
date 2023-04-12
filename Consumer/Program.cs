@@ -1,15 +1,17 @@
 ﻿using System.Diagnostics;
-using System.Text.Json;
-using Consumer;
+using ApiClient.Models;
+using ApiClient.Models.Dtos;
+using ApiClient.Services;
+using ApiClient.Services.Abstractions;
 
 await Execute();
 
 async Task Execute()
 {
-    var httpClient = new HttpClient { BaseAddress = new Uri("https://localhost:7051/") };
+    var client = new Client(new ClientConfiguration(new Uri("https://localhost:7051/")));
     var emails = Enumerable.Range(1, 15).Select(i => $"test{i}@pl.pl").ToList();
-    var byOneResult = await ByOne(emails, httpClient);
-    var parallelResult = await Parallel(emails, httpClient);
+    var byOneResult = await ByOne(emails, client);
+    var parallelResult = await Parallel(emails, client);
     Console.WriteLine($"By one time in seconds: {byOneResult.Time}");
     Console.WriteLine($"Parallel time in seconds: {parallelResult.Time}");
     Console.WriteLine("Press enter to print results");
@@ -20,7 +22,7 @@ async Task Execute()
     Console.ReadLine();
 }
 
-void Print(IEnumerable<UserDto> items, string title)
+void Print(IEnumerable<GetUser> items, string title)
 {
     Console.WriteLine();
     Console.WriteLine(title);
@@ -30,36 +32,31 @@ void Print(IEnumerable<UserDto> items, string title)
     }
 }
 
-async Task<UserDto> GetUserByEmail(string email, HttpClient client)
-{
-    var response = await client.GetAsync($"User/{email}");
-    response.EnsureSuccessStatusCode();
-    var contentAsString = await response.Content.ReadAsStringAsync();
-
-    return JsonSerializer.Deserialize<UserDto>(contentAsString)!;
-}
-
-async Task<(IEnumerable<UserDto> Items, double Time)> ByOne(IEnumerable<string> emails, HttpClient client)
+async Task<(IEnumerable<GetUser> Items, double Time)> ByOne(IEnumerable<string> emails, IClient client)
 {
     var sw = new Stopwatch();
-    var results = new List<UserDto>();
+    var results = new List<GetUser>();
     sw.Start();
     foreach (var email in emails)
     {
-        results.Add(await GetUserByEmail(email, client));
+        var result = await client.GetUserByEmail(email);
+        if (result.IsT0)
+        {
+            results.Add(result.AsT0);
+        }
     }
     sw.Stop();
 
     return (results, sw.Elapsed.TotalSeconds);
 }
 
-async Task<(IEnumerable<UserDto> Items, double Time)> Parallel(IEnumerable<string> emails, HttpClient client)
+async Task<(IEnumerable<GetUser> Items, double Time)> Parallel(IEnumerable<string> emails, IClient client)
 {
     var sw = new Stopwatch();
     sw.Start();
-    var tasks = emails.Select(s => GetUserByEmail(s, client));
+    var tasks = emails.Select(s => client.GetUserByEmail(s));
     var results = await Task.WhenAll(tasks);
     sw.Stop();
 
-    return (results, sw.Elapsed.TotalSeconds);
+    return (results.Where(of => of.IsT0).Select(of => of.AsT0), sw.Elapsed.TotalSeconds);
 }

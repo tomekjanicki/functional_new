@@ -8,4 +8,8 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\ApiClient\ApiClient.csproj" />
+	</ItemGroup>
+
 </Project>
