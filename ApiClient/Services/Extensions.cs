@@ -9,6 +9,9 @@ using ApiClient.Infrastructure;
 using ApiClient.Models;
 using ApiClient.Services.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
+using OneOf;
+using OneOf.Types;
+using Error = ApiClient.Infrastructure.Error;
 
 namespace ApiClient.Services
 {
@@ -88,6 +91,38 @@ namespace ApiClient.Services
             collection.AddSingleton<IClient>(provider => new Client(clientConfigurationFactory(provider)));
 
             return collection;
+        }
+
+        public static T GetResultIfSuccessOrThrow<T>(this OneOf<T, NotFound, Error> result)
+        {
+            if (result.IsT0)
+            {
+                return result.AsT0;
+            }
+            if (result.IsT1)
+            {
+                throw new InvalidOperationException($"Api method failed with result: {result.AsT1}");
+            }
+            ThrowErrorException(result.AsT2);
+
+            return default!;
+        }
+
+        public static T GetResultIfSuccessOrThrow<T>(this OneOf<T, Error> result)
+        {
+            if (result.IsT0)
+            {
+                return result.AsT0;
+            }
+
+            ThrowErrorException(result.AsT1);
+
+            return default!;
+        }
+
+        private static void ThrowErrorException(Error error)
+        {
+            throw new InvalidOperationException($"Api method failed with Status Code: {error.StatusCode}, Content: {error.Content}");
         }
     }
 }

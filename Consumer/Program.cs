@@ -40,10 +40,7 @@ async Task<(IEnumerable<GetUser> Items, double Time)> ByOne(IEnumerable<string> 
     foreach (var email in emails)
     {
         var result = await client.GetUserByEmail(email);
-        if (result.IsT0)
-        {
-            results.Add(result.AsT0);
-        }
+        results.Add(result.GetResultIfSuccessOrThrow());
     }
     sw.Stop();
 
@@ -58,5 +55,5 @@ async Task<(IEnumerable<GetUser> Items, double Time)> Parallel(IEnumerable<strin
     var results = await Task.WhenAll(tasks);
     sw.Stop();
 
-    return (results.Where(of => of.IsT0).Select(of => of.AsT0), sw.Elapsed.TotalSeconds);
+    return (results.Select(of => of.GetResultIfSuccessOrThrow()), sw.Elapsed.TotalSeconds);
 }
