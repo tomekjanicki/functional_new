@@ -29,7 +29,7 @@ namespace ApiClient.Services
             return httpClient.SendAsync(HttpMethod.Get, path, pathParam, queryParams, content, headers, token);
         }
 
-        public static Task<HttpResponseMessage> SendAsync(this HttpClient httpClient, HttpMethod method, string path, string? pathParam = null, IReadOnlyDictionary<string, object?>? queryParams = null,
+        public static async Task<HttpResponseMessage> SendAsync(this HttpClient httpClient, HttpMethod method, string path, string? pathParam = null, IReadOnlyDictionary<string, object?>? queryParams = null,
             HttpContent? content = null, IEnumerable<Header>? headers = null, CancellationToken token = default)
         {
             var parameters = queryParams == null ? string.Empty : queryParams.GetUrlParameters();
@@ -45,7 +45,7 @@ namespace ApiClient.Services
             {
                 Query = parameters
             };
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 Method = method,
                 RequestUri = uriBuilder.Uri,
@@ -53,14 +53,14 @@ namespace ApiClient.Services
             };
             if (headers == null)
             {
-                return httpClient.SendAsync(request, token);
+                return await httpClient.SendAsync(request, token).ConfigureAwait(false);
             }
             foreach (var header in headers)
             {
                 request.Headers.Add(header.Name, header.Values);
             }
 
-            return httpClient.SendAsync(request, token);
+            return await httpClient.SendAsync(request, token).ConfigureAwait(false);
         }
 
         public static string GetUrlParameters(this IReadOnlyDictionary<string, object?> parameters)

@@ -17,6 +17,7 @@ namespace ApiClient.Services
     public sealed class Client : IClient
     {
         private readonly HttpClient _httpClient;
+        private const string ApplicationJsonContentType = "application/json";
 
         public Client(ClientConfiguration configuration)
         {
@@ -39,21 +40,23 @@ namespace ApiClient.Services
 
         public async Task<OneOf<GetUser, NotFound, Error>> GetUserByEmail(string email, CancellationToken token = default)
         {
-            var response = await _httpClient.GetAsync("user", email, token: token).ConfigureAwait(false);
+            using var response = await _httpClient.GetAsync("user", email, token: token).ConfigureAwait(false);
 
             return await HandleResultOrNotFoundOrError<GetUser>(response.Content, response.StatusCode, HttpStatusCode.OK).ConfigureAwait(false);
         }
 
         public async Task<OneOf<int, Error>> AddUser(AddUser user, CancellationToken token = default)
         {
-            var response = await _httpClient.PostAsync("user", content: new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json"), token: token).ConfigureAwait(false);
+            using var inputContent = new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, ApplicationJsonContentType);
+            using var response = await _httpClient.PostAsync("user", content: inputContent, token: token).ConfigureAwait(false);
 
             return await HandleResultOrError<int>(response.Content, response.StatusCode, HttpStatusCode.Created).ConfigureAwait(false);
         }
 
         public async Task<OneOf<int, Error>> AddUserRaw(byte[] user, CancellationToken token = default)
         {
-            var response = await _httpClient.PostAsync("user", content: new ByteArrayContent(user), token: token).ConfigureAwait(false);
+            using var inputContent = new ByteArrayContent(user);
+            using var response = await _httpClient.PostAsync("user", content: inputContent, token: token).ConfigureAwait(false);
 
             return await HandleResultOrError<int>(response.Content, response.StatusCode, HttpStatusCode.Created).ConfigureAwait(false);
         }
