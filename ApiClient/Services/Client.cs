@@ -56,6 +56,7 @@ namespace ApiClient.Services
         public async Task<OneOf<int, Error>> AddUserRaw(byte[] user, CancellationToken token = default)
         {
             using var inputContent = new ByteArrayContent(user);
+            inputContent.Headers.ContentType = new MediaTypeHeaderValue(ApplicationJsonContentType);
             using var response = await _httpClient.PostAsync("user", content: inputContent, token: token).ConfigureAwait(false);
 
             return await HandleResultOrError<int>(response.Content, response.StatusCode, HttpStatusCode.Created).ConfigureAwait(false);
