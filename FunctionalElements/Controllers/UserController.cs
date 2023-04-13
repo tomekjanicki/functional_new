@@ -17,7 +17,7 @@ public sealed class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("{email}")]
+    [HttpGet("{email}", Name = nameof(GetUserByEMail))]
     [ProducesResponseType(typeof(GetUser), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
@@ -30,7 +30,7 @@ public sealed class UserController : ControllerBase
                 static error => error.ToBadRequestTaskActionResult());
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = nameof(GetUserById))]
     [ProducesResponseType(typeof(GetUser), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
@@ -41,7 +41,7 @@ public sealed class UserController : ControllerBase
             .Match<IActionResult>(Ok, _ => NotFound());
     }
 
-    [HttpPost]
+    [HttpPost(Name = nameof(AddUser))]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
