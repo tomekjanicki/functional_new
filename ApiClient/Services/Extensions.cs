@@ -50,18 +50,18 @@ namespace ApiClient.Services
             {
                 Method = method,
                 RequestUri = uriBuilder.Uri,
-                Content = content,
+                Content = content
             };
             if (headers == null)
             {
-                return await httpClient.SendAsync(request, token).ConfigureAwait(false);
+                return await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, token).ConfigureAwait(false);
             }
             foreach (var header in headers)
             {
                 request.Headers.Add(header.Name, header.Values);
             }
 
-            return await httpClient.SendAsync(request, token).ConfigureAwait(false);
+            return await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, token).ConfigureAwait(false);
         }
 
         public static string GetUrlParameters(this IReadOnlyDictionary<string, object?> parameters)
@@ -71,13 +71,13 @@ namespace ApiClient.Services
             {
                 if (parameter.Value != null)
                 {
-                    queryParamCollection.Add(parameter.Key, GetValue(parameter.Value));
+                    queryParamCollection.Add(parameter.Key, GetStringValue(parameter.Value));
                 }
             }
             return queryParamCollection.ToString();
         }
 
-        private static string GetValue(object input)
+        public static string GetStringValue(object input)
         {
             if (input is DateTime dateTime)
             {
