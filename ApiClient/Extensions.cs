@@ -10,13 +10,14 @@ using System.Threading.Tasks;
 using System.Web;
 using ApiClient.Infrastructure;
 using ApiClient.Models;
+using ApiClient.Services;
 using ApiClient.Services.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using OneOf;
 using OneOf.Types;
 using Error = ApiClient.Infrastructure.Error;
 
-namespace ApiClient.Services
+namespace ApiClient
 {
     public static class Extensions
     {

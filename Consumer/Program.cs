@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using ApiClient;
 using ApiClient.Models;
 using ApiClient.Models.Dtos;
 using ApiClient.Services;
