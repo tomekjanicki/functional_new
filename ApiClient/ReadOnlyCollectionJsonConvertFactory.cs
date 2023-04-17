@@ -34,12 +34,12 @@ namespace ApiClient
             {
                 if (reader.TokenType == JsonTokenType.Null)
                 {
-                    return new List<T>();
+                    return Array.Empty<T>();
                 }
-                var valueType = typeof(IEnumerable<T>);
-                var valueConverter = (JsonConverter<IEnumerable<T>>)options.GetConverter(valueType);
+                var valueType = typeof(T[]);
+                var valueConverter = (JsonConverter<T[]>)options.GetConverter(valueType);
 
-                return new List<T>(valueConverter.Read(ref reader, valueType, options)!);
+                return valueConverter.Read(ref reader, valueType, options)!;
             }
 
             public override void Write(Utf8JsonWriter writer, IReadOnlyCollection<T> value, JsonSerializerOptions options)

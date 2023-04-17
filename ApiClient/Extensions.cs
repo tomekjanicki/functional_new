@@ -126,6 +126,14 @@ namespace ApiClient
 
         public static StringContent GetStringInputContent<T>(this T input) => new StringContent(JsonSerializer.Serialize(input), Encoding.UTF8, ApplicationJsonContentType);
 
+        private static readonly JsonSerializerOptions Options;
+
+        static Extensions()
+        {
+            Options = new JsonSerializerOptions();
+            Options.Converters.Add(new ReadOnlyCollectionJsonConvertFactory());
+        }
+
         public static ByteArrayContent GetByteArrayContentWithApplicationJsonContentType(this byte[] array)
         {
             var content = new ByteArrayContent(array);
@@ -134,7 +142,7 @@ namespace ApiClient
             return content;
         }
 
-        public static T Deserialize<T>(this string contentAsString) => JsonSerializer.Deserialize<T>(contentAsString)!;
+        public static T Deserialize<T>(this string contentAsString) => JsonSerializer.Deserialize<T>(contentAsString, Options)!;
 
         public static async Task<OneOf<T, Error>> HandleResultOrError<T>(this HttpContent content, HttpStatusCode statusCode,
             HttpStatusCode successStatusCode)
