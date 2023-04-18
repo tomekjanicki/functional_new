@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using ApiClient.Infrastructure;
 using OneOf;
 
-namespace ApiClient.V2.Abstractions
+namespace ApiClient.V2.Services.Abstractions
 {
     public interface IManagedObjectApi
     {

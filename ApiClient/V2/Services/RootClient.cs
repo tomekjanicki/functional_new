@@ -2,9 +2,9 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using ApiClient.Models;
-using ApiClient.V2.Abstractions;
+using ApiClient.V2.Services.Abstractions;
 
-namespace ApiClient.V2
+namespace ApiClient.V2.Services
 {
     public sealed class RootClient : IRootClient
     {

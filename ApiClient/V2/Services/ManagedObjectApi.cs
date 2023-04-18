@@ -4,10 +4,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using ApiClient.Infrastructure;
-using ApiClient.V2.Abstractions;
+using ApiClient.V2.Services.Abstractions;
 using OneOf;
 
-namespace ApiClient.V2
+namespace ApiClient.V2.Services
 {
     public sealed class ManagedObjectApi : IManagedObjectApi
     {

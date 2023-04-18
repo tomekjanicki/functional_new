@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Http.Headers;
 
-namespace ApiClient.V2.Abstractions
+namespace ApiClient.V2.Services.Abstractions
 {
     public interface IRootClient : IDisposable
     {
