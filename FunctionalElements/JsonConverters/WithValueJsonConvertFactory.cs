@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FunctionalElements.Types;
+using FunctionalElements.Types.Abstractions;
 
 namespace FunctionalElements.JsonConverters;
 

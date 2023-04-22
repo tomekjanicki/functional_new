@@ -1,60 +1,55 @@
-﻿using System.Diagnostics;
-using ApiClient;
-using ApiClient.Models;
-using ApiClient.Models.Dtos;
-using ApiClient.Services;
-using ApiClient.Services.Abstractions;
+﻿using Consumer;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
-await Execute();
+var builder = Host.CreateDefaultBuilder(args);
 
-async Task Execute()
+builder.ConfigureLogging(loggingBuilder =>
 {
-    var client = new Client(new ClientConfiguration(new Uri("https://localhost:7051/")));
-    var emails = Enumerable.Range(1, 15).Select(i => $"test{i}@pl.pl").ToList();
-    var byOneResult = await ByOne(emails, client);
-    var parallelResult = await Parallel(emails, client);
-    Console.WriteLine($"By one time in seconds: {byOneResult.Time}");
-    Console.WriteLine($"Parallel time in seconds: {parallelResult.Time}");
-    Console.WriteLine("Press enter to print results");
-    Console.ReadLine();
-    Print(byOneResult.Items, "By one");
-    Print(parallelResult.Items, "Parallel");
-    Console.WriteLine("Press enter to quit");
-    Console.ReadLine();
-}
-
-void Print(IEnumerable<GetUser> items, string title)
-{
-    Console.WriteLine();
-    Console.WriteLine(title);
-    foreach (var item in items)
+    loggingBuilder.ClearProviders();
+    loggingBuilder.AddOpenTelemetry(options =>
     {
-        Console.WriteLine(item.EMail);
-    }
-}
-
-async Task<(IEnumerable<GetUser> Items, double Time)> ByOne(IEnumerable<string> emails, IClient client)
+        var resourceBuilder = ResourceBuilder.CreateDefault();
+        resourceBuilder.AddService(Telemetry.ServiceName);
+        options.SetResourceBuilder(resourceBuilder);
+        options.IncludeScopes = true;
+        options.AddConsoleExporter();
+    });
+});
+builder.ConfigureServices(collection =>
 {
-    var sw = new Stopwatch();
-    var results = new List<GetUser>();
-    sw.Start();
-    foreach (var email in emails)
-    {
-        var result = await client.GetUserByEmail(email);
-        results.Add(result.GetResultIfSuccessOrThrow());
-    }
-    sw.Stop();
+    collection.AddOpenTelemetry()
+        .ConfigureResource(resourceBuilder => resourceBuilder.AddService(Telemetry.ServiceName))
+        .WithTracing(providerBuilder => providerBuilder
+            .SetErrorStatusOnException()
+            .AddHttpClientInstrumentation()
+            .AddSource(Telemetry.ActivitySourceName)
+            .AddConsoleExporter()
+            .AddJaegerExporter());
+    collection.AddSingleton<Service>();
+});
 
-    return (results, sw.Elapsed.TotalSeconds);
-}
-
-async Task<(IEnumerable<GetUser> Items, double Time)> Parallel(IEnumerable<string> emails, IClient client)
+var host = builder.Build();
+var logger = host.Services.GetRequiredService<ILogger<Program>>();
+var hostStarted = false;
+try
 {
-    var sw = new Stopwatch();
-    sw.Start();
-    var tasks = emails.Select(s => client.GetUserByEmail(s));
-    var results = await Task.WhenAll(tasks);
-    sw.Stop();
-
-    return (results.Select(of => of.GetResultIfSuccessOrThrow()), sw.Elapsed.TotalSeconds);
+    await host.StartAsync();
+    hostStarted = true;
+    var service = host.Services.GetRequiredService<Service>();
+    await service.Execute2();
+}
+catch (Exception e)
+{
+    logger.LogError(e, "Generic error handler");
+    Console.WriteLine("Error occurred. Press enter to close.");
+    Console.ReadLine();
+}
+if (hostStarted)
+{
+    await host.StopAsync();
 }

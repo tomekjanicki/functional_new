@@ -1,4 +1,4 @@
-namespace FunctionalElements.Types;
+namespace FunctionalElements.Types.Abstractions;
 
 public interface IWithValue<out T>
 {

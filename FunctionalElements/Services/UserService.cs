@@ -26,17 +26,17 @@ public sealed class UserService
         return result != null ? result : new NotFound();
     }
 
-    public async Task<OneOf<GetUser, NotFound>> GetUserById(int id)
+    public async Task<OneOf<GetUser, NotFound>> GetUserById(UserId id)
     {
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
         var result = await connection.QuerySingleOrDefaultAsync<GetUser>("SELECT [Id], [EMail], [FirstName], [LastName] FROM [dbo].[User] WHERE [Id] = @id",
-            new { id });
+            new { id = id.Value });
 
         return result != null ? result : new NotFound();
     }
 
-    public async Task<OneOf<int, Error<string>>> AddUser(AddUser addUser)
+    public async Task<OneOf<UserId, Error<string>>> AddUser(AddUser addUser)
     {
         try
         {
@@ -45,7 +45,7 @@ public sealed class UserService
             var result = await connection.QuerySingleAsync<int>("INSERT [dbo].[User] ([EMail], [FirstName], [LastName]) VALUES(@email, @firstName, @lastName); SELECT SCOPE_IDENTITY()",
                new { email = addUser.EMail.Value, firstName = addUser.FirstName.Value, lastName = addUser.LastName.Value });
 
-            return result;
+            return (UserId)result;
         }
         catch (SqlException e)
         {

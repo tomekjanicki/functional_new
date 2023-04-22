@@ -39,9 +39,20 @@ public static class Extensions
 
     public static void MapTypeToString<T>(this SwaggerGenOptions swaggerGenOptions)
     {
+        swaggerGenOptions.MapTypeTo<T>("string");
+    }
+
+    public static void MapTypeToInteger<T>(this SwaggerGenOptions swaggerGenOptions)
+    {
+        swaggerGenOptions.MapTypeTo<T>("integer");
+    }
+
+    private static void MapTypeTo<T>(this SwaggerGenOptions swaggerGenOptions, string type)
+    {
         swaggerGenOptions.MapType<T>(() => new OpenApiSchema
         {
-            Type = "string"
+            Type = type
         });
     }
+
 }

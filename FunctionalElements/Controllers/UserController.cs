@@ -37,7 +37,7 @@ public sealed class UserController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetUserById(int id)
     {
-        return (await _userService.GetUserById(id))
+        return (await _userService.GetUserById((UserId)id))
             .Match<IActionResult>(Ok, _ => NotFound());
     }
 
